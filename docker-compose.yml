@@ -1,0 +1,37 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-change-me-in-production}
+      PORT: "8787"
+      DATABASE_PATH: /data/altdream.db
+      BLOB_DIR: /data/blobs
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,http://127.0.0.1:5173}
+      # When using profile "ipfs", set e.g. IPFS_API_URL=http://ipfs:5001 in .env
+      IPFS_API_URL: ${IPFS_API_URL:-}
+    volumes:
+      - gateway_data:/data
+    restart: unless-stopped
+    networks: [altdream]
+
+  ipfs:
+    profiles: ["ipfs"]
+    image: ipfs/kubo:v0.32.1
+    volumes:
+      - ipfs_staging:/export
+      - ipfs_data:/data/ipfs
+    ports:
+      - "5001:5001"
+      - "8080:8080"
+    restart: unless-stopped
+    networks: [altdream]
+
+networks:
+  altdream:
+
+volumes:
+  gateway_data:
+  ipfs_staging:
+  ipfs_data:

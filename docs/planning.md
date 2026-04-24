@@ -79,9 +79,40 @@ This document captures product and architecture intent for the ecosystem. It is 
 
 ---
 
+## Mobile messenger + gateway pairing
+
+**Goal.** gHosted ships as a **lite messenger** on Android / iOS (Capacitor-wrapped web client is the default path). The user may run **alt.dream gateway** on a machine they control (home NAS, PC, or VPS) and enter its **HTTPS base URL** plus an **API token** in the messenger settings.
+
+**Pairing v1 (implemented on gateway side).** Bearer token (`GATEWAY_API_KEY`) per deployment. The hub UI can pull events for debugging; gHosted should obtain the token out-of-band (QR from hub admin screen later, or copy-paste once).
+
+**Offload flow.** Large chat attachments (or user opt-in) upload to `POST /v1/offload` (multipart `file` + optional `personaDid`, `ecosystemBucket`, `placeId`, `surface`). Gateway stores bytes, computes a **raw leaf CID**, records a **`EcosystemReferenceEvent`**, and optionally calls **Kubo** `api/v0/add` when `IPFS_API_URL` is set.
+
+**Local-first.** The phone keeps hot conversation state locally; offload reduces device pressure for cold media while preserving **CID + reference event** as the cross-device handle.
+
+---
+
+## Trust model (gateway)
+
+Whoever runs the gateway is a **full trust anchor** for anything uploaded or pinned through it: they can read blobs (unless gHosted encrypts ciphertext client-side before upload), throttle, delete local copies, and see metadata (MIME, sizes, persona/bucket tags).
+
+**Mitigations to document in product copy**
+
+- Self-host by default; TLS in front; rotate `GATEWAY_API_KEY`; separate keys per household if needed.
+- E2E messaging: if message bodies stay encrypted end-to-end, the gateway may still see **attachment ciphertext** and sizes — say so plainly in UX.
+
+---
+
+## Offload vs encryption
+
+- **Cleartext upload:** gateway and any backup see content — only for non-sensitive media or when user accepts.
+- **Ciphertext upload:** gateway stores an opaque blob; legibility in the hub is “size + CID + bucket” without content inspection.
+- **Pinning:** optional Kubo add does not change trust — the IPFS network may host retrievable blocks; treat pins as **public distribution** unless encrypted.
+
+---
+
 ## Open decisions
 
-- Hub stack, export formats, and first-party ingestion paths vs gHosted CID map JSON.
-- Self-hosted vs hosted deployment for companion apps and hub.
+- First-party ingestion paths vs gHosted CID map JSON (exact export filename and schema versioning).
+- Self-hosted vs hosted deployment defaults for non-technical users.
 - How much optional LARP presentation ships in v1 vs plain “infra dashboard” mode.
 - MPC scope for first user journeys (signing, release, attestation) vs traditional single-operator modules.
