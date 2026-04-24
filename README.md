@@ -49,7 +49,7 @@ Until there is a published npm package, ecosystem types and Zod schemas live in 
 
 ```bash
 cp .env.example .env
-# Set GATEWAY_API_KEY in .env for a serious local run (empty key falls back to a dev-only token — see gateway logs).
+# Set GATEWAY_API_KEY in .env for a serious local run. If empty, the gateway accepts Bearer `dev-insecure-change-me` only for local dev.
 
 pnpm install
 pnpm dev
